@@ -1,0 +1,66 @@
+﻿<<<<<<< HEAD
+# ---------------[ Unity generated ]------------------ #
+Temp/
+Obj/
+UnityGenerated/
+Library/
+Builds/
+
+# ----[ Visual Studio / MonoDevelop generated ]------- #
+ 
+ExportedObj/
+=======
+﻿# Unity generated and a few customs #
+# ================================= #
+Temp/*
+Library/*
+Build/*
+Obj/*
+WebBuild/*
+WindowsBuild/*
+
+# ===================================== #
+# Visual Studio / MonoDevelop generated #
+# ===================================== #
+ExportedObj/*
+>>>>>>> parent of 55e7ae1... Imported Simple Items
+*.svd
+*.userprefs
+*.csproj
+*.pidb
+*.suo
+*.sln
+*.user
+*.unityproj
+*.booproj
+.vs/*
+vs/*
+<<<<<<< HEAD
+ 
+# -------------[ OS generated ]------------------------ #
+=======
+*.log
+# Ignore UnityVS so users can use different versions
+Assets/UnityVS/*
+
+#ignoring pidb, they are just code completion caching data according to:
+# http://stackoverflow.com/questions/1022111/what-are-monodevelops-pidb-files
+*.pidb
+
+# ============ #
+# OS generated #
+# ============ #
+>>>>>>> parent of 55e7ae1... Imported Simple Items
+.DS_Store
+.DS_Store?
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+<<<<<<< HEAD
+Thumbs.db
+bin/
+*.nsb
+*.zip
+=======
+Thumbs.db
+.vs/Rehabbers/v15/Server/sqlite3/db.lock
