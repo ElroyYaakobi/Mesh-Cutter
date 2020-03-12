@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -14,89 +15,94 @@ namespace MeshManipulation.MeshCutting
         public static CutMesh[] PerformCut(Mesh mesh, Plane cutPlane)
         {
             var meshVertices = mesh.vertices;
-            var meshIndices = mesh.GetIndices(0);
             var meshUV = mesh.uv;
             var meshNormals = mesh.normals;
+            var meshSubMeshCount = mesh.subMeshCount;
 
-            var leftMesh = new CutMesh();
-            var rightMesh = new CutMesh();
+            var leftMesh = new CutMesh(meshSubMeshCount);
+            var rightMesh = new CutMesh(meshSubMeshCount);
 
             // iterate triangles
-            for (var i = 0; i < meshIndices.Length - 2; i += 3)
+            for (var subMesh = 0; subMesh < meshSubMeshCount; subMesh++)
             {
-                var v1Index = meshIndices[i];
-                var v2Index = meshIndices[i + 1];
-                var v3Index = meshIndices[i + 2];
+                var meshIndices = mesh.GetIndices(subMesh);
 
-                var triangle = new MeshTriangle(v1Index, v2Index, v3Index, meshVertices, meshNormals, meshUV);
-
-                var v1Side = cutPlane.GetSide(triangle.Vertices[0].Point);
-                var v2Side = cutPlane.GetSide(triangle.Vertices[1].Point);
-                var v3Side = cutPlane.GetSide(triangle.Vertices[2].Point);
-
-                // add to proper sides
-                if (v1Side && v2Side && v3Side)
+                for (var indicesIndex = 0; indicesIndex < meshIndices.Length - 2; indicesIndex += 3)
                 {
-                    rightMesh.AddTriangle(triangle);
-                    continue;
-                }
+                    var v1Index = meshIndices[indicesIndex];
+                    var v2Index = meshIndices[indicesIndex + 1];
+                    var v3Index = meshIndices[indicesIndex + 2];
 
-                if (!v1Side && !v2Side && !v3Side)
-                {
-                    leftMesh.AddTriangle(triangle);
-                    continue;
-                }
+                    var triangle = new MeshTriangle(v1Index, v2Index, v3Index, meshVertices, meshNormals, meshUV);
 
-                if (v1Side == v2Side)
-                {
+                    var v1Side = cutPlane.GetSide(triangle.Vertices[0].Point);
+                    var v2Side = cutPlane.GetSide(triangle.Vertices[1].Point);
+                    var v3Side = cutPlane.GetSide(triangle.Vertices[2].Point);
+
+                    // add to proper sides
+                    if (v1Side && v2Side && v3Side)
+                    {
+                        rightMesh.AddTriangle(triangle, subMesh);
+                        continue;
+                    }
+
+                    if (!v1Side && !v2Side && !v3Side)
+                    {
+                        leftMesh.AddTriangle(triangle, subMesh);
+                        continue;
+                    }
+
+                    if (v1Side == v2Side)
+                    {
+                        if (v1Side)
+                        {
+                            CreateTrianglesFromTwoVertices(rightMesh, 0, 1, 2, triangle, cutPlane, subMesh);
+                            CreateTrianglesFromOneVertices(leftMesh, 2, 0, 1, triangle, cutPlane, subMesh);
+
+                            continue;
+                        }
+
+                        CreateTrianglesFromTwoVertices(leftMesh, 0, 1, 2, triangle, cutPlane, subMesh);
+                        CreateTrianglesFromOneVertices(rightMesh, 2, 0, 1, triangle, cutPlane, subMesh);
+
+                        continue;
+                    }
+
+                    if (v2Side == v3Side)
+                    {
+                        if (v2Side)
+                        {
+                            CreateTrianglesFromTwoVertices(rightMesh, 1, 2, 0, triangle, cutPlane, subMesh);
+                            CreateTrianglesFromOneVertices(leftMesh, 0, 1, 2, triangle, cutPlane, subMesh);
+
+                            continue;
+                        }
+
+                        CreateTrianglesFromTwoVertices(leftMesh, 1, 2, 0, triangle, cutPlane, subMesh);
+                        CreateTrianglesFromOneVertices(rightMesh, 0, 1, 2, triangle, cutPlane, subMesh);
+
+                        continue;
+                    }
+
+                    // last possibility, v3Side == v1Side
+
                     if (v1Side)
                     {
-                        CreateTrianglesFromTwoVertices(rightMesh, 0, 1, 2, triangle, cutPlane);
-                        CreateTrianglesFromOneVertices(leftMesh, 2, 0, 1, triangle, cutPlane);
+                        CreateTrianglesFromTwoVertices(rightMesh, 2, 0, 1, triangle, cutPlane, subMesh);
+                        CreateTrianglesFromOneVertices(leftMesh, 1, 2, 0, triangle, cutPlane, subMesh);
 
                         continue;
                     }
 
-                    CreateTrianglesFromTwoVertices(leftMesh, 0, 1, 2, triangle, cutPlane);
-                    CreateTrianglesFromOneVertices(rightMesh, 2, 0, 1, triangle, cutPlane);
+                    CreateTrianglesFromTwoVertices(leftMesh, 2, 0, 1, triangle, cutPlane, subMesh);
+                    CreateTrianglesFromOneVertices(rightMesh, 1, 2, 0, triangle, cutPlane, subMesh);
 
-                    continue;
                 }
-
-                if (v2Side == v3Side)
-                {
-                    if (v2Side)
-                    {
-                        CreateTrianglesFromTwoVertices(rightMesh, 1, 2, 0, triangle, cutPlane);
-                        CreateTrianglesFromOneVertices(leftMesh, 0, 1, 2, triangle, cutPlane);
-
-                        continue;
-                    }
-
-                    CreateTrianglesFromTwoVertices(leftMesh, 1, 2, 0, triangle, cutPlane);
-                    CreateTrianglesFromOneVertices(rightMesh, 0, 1, 2, triangle, cutPlane);
-
-                    continue;
-                }
-
-                // last possibility, v3Side == v1Side
-
-                if (v1Side)
-                {
-                    CreateTrianglesFromTwoVertices(rightMesh, 2, 0, 1, triangle, cutPlane);
-                    CreateTrianglesFromOneVertices(leftMesh, 1, 2, 0, triangle, cutPlane);
-
-                    continue;
-                }
-
-                CreateTrianglesFromTwoVertices(leftMesh, 2, 0, 1, triangle, cutPlane);
-                CreateTrianglesFromOneVertices(rightMesh, 1, 2, 0, triangle, cutPlane);
-
             }
 
             return new[] { leftMesh, rightMesh };
         }
-        private static void CreateTrianglesFromTwoVertices(CutMesh mesh, int v1Index, int v2Index, int v3Index, MeshTriangle triangle, Plane plane)
+        private static void CreateTrianglesFromTwoVertices(CutMesh mesh, int v1Index, int v2Index, int v3Index, MeshTriangle triangle, Plane plane, int subMesh)
         {
             var v1In = triangle.Vertices[v1Index];
             var v2In = triangle.Vertices[v2Index];
@@ -107,10 +113,10 @@ namespace MeshManipulation.MeshCutting
 
             // create triangles
 
-            mesh.AddTriangle(v1In, v2In, v1ToV3Point);
-            mesh.AddTriangle(v1ToV3Point, v2In, v2ToV3Point);
+            mesh.AddTriangle(v1In, v2In, v1ToV3Point, subMesh);
+            mesh.AddTriangle(v1ToV3Point, v2In, v2ToV3Point, subMesh);
         }
-        private static void CreateTrianglesFromOneVertices(CutMesh mesh, int v1Index, int v2Index, int v3Index, MeshTriangle triangle, Plane plane)
+        private static void CreateTrianglesFromOneVertices(CutMesh mesh, int v1Index, int v2Index, int v3Index, MeshTriangle triangle, Plane plane, int subMesh)
         {
             var v1In = triangle.Vertices[v1Index];
             var v2Out = triangle.Vertices[v2Index];
@@ -121,7 +127,7 @@ namespace MeshManipulation.MeshCutting
 
             // create triangle
 
-            mesh.AddTriangle(v1In, v1ToV2Point, v1ToV3Point);
+            mesh.AddTriangle(v1In, v1ToV2Point, v1ToV3Point, subMesh);
         }
 
         #region Utility
@@ -135,13 +141,15 @@ namespace MeshManipulation.MeshCutting
         /// <returns></returns>
         public static MeshFilter[] CutMeshFilter(MeshFilter meshFilter, MeshRenderer cutPlaneRenderer, bool hideMesh = true)
         {
+            var t1 = DateTime.Now;
+
             var cutMeshes = PerformCut(meshFilter, cutPlaneRenderer);
 
             var meshRenderer = meshFilter.GetComponent<MeshRenderer>();
-            var material = meshRenderer?.sharedMaterial ?? null;
+            var materials = meshRenderer?.sharedMaterials ?? null;
 
             var mFilters = new MeshFilter[cutMeshes.Length];
-            for (int i = 0; i < cutMeshes.Length; i++)
+            for (var i = 0; i < cutMeshes.Length; i++)
             {
                 var cutMesh = cutMeshes[i];
 
@@ -152,10 +160,15 @@ namespace MeshManipulation.MeshCutting
                     uv = cutMesh.Vertices.Select(x => x.Uv).ToArray()
                 };
 
-                mesh.SetIndices(cutMesh.Triangles.ToArray(), MeshTopology.Triangles, 0);
+                for (var subMesh = 0; subMesh < cutMesh.SubMeshes.Length; subMesh++)
+                {
+                    mesh.SetIndices(cutMesh.SubMeshes[subMesh].TrianglesIndices.ToArray(),
+                                        MeshTopology.Triangles,
+                                        subMesh);
+                }
 
                 var go = new GameObject("side mesh " + i);
-                go.AddComponent<MeshRenderer>().sharedMaterial = material;
+                go.AddComponent<MeshRenderer>().sharedMaterials = materials;
 
                 var mFilter = go.AddComponent<MeshFilter>();
                 mFilter.sharedMesh = mesh;
@@ -171,6 +184,9 @@ namespace MeshManipulation.MeshCutting
             if (!hideMesh) return mFilters;
 
             meshRenderer.enabled = false;
+
+            var t2 = DateTime.Now;
+            Debug.Log($"It took {(t2 - t1).TotalMilliseconds}ms to cut the mesh!");
 
             return mFilters;
         }

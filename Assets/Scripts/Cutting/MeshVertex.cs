@@ -47,4 +47,5 @@ namespace MeshManipulation.MeshCutting
             return new MeshVertex(-1, point, normal, uv);
         }
     }
+
 }
