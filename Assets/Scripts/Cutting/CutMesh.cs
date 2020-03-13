@@ -60,7 +60,7 @@ namespace MeshManipulation.MeshCutting
         /// <param name="subMesh">target subMesh of the indices</param>
         private void AddNewTriangleVertex(MeshVertex vertex, int subMesh)
         {
-            if(!OldToNewMap.TryGetValue(vertex.OriginalIndex, out int newVIndex))
+            if(!OldToNewMap.TryGetValue(vertex.OriginalIndex, out var newVIndex))
             {
                 newVIndex = AddNewVertex(vertex);
 

@@ -12,20 +12,82 @@ namespace MeshManipulation.MeshCutting
     /// </summary>
     public static class MeshCutter
     {
+        #region Methods
+
+        /// <summary>
+        /// Perform a cut to a mesh filter using a mesh renderer plane
+        /// </summary>
+        /// <param name="meshFilter"></param>
+        /// <param name="cutPlaneRenderer"></param>
+        /// <returns></returns>
+        public static CutMesh[] PerformCut(MeshFilter meshFilter, MeshRenderer cutPlaneRenderer)
+        {
+            if (!cutPlaneRenderer) throw new System.NullReferenceException("cut plane not specified");
+            if (!meshFilter) throw new System.NullReferenceException("Mesh filter is null");
+
+            var mesh = meshFilter.mesh;
+            if (!mesh) throw new System.NullReferenceException("Mesh is null");
+
+            var cutPlaneBounds = cutPlaneRenderer.bounds;
+
+            var rightSize = cutPlaneRenderer.transform.right;
+            rightSize.Scale(cutPlaneBounds.size);
+
+            var p1 = cutPlaneBounds.min;
+            var p2 = cutPlaneBounds.max;
+            var p3 = p1 + rightSize;
+
+            p1 = meshFilter.transform.InverseTransformPoint(p1);
+            p2 = meshFilter.transform.InverseTransformPoint(p2);
+            p3 = meshFilter.transform.InverseTransformPoint(p3);
+
+            return PerformCut(mesh, new Plane(p1, p2, p3));
+        }
+
+        /// <summary>
+        /// Perform a cut to a mesh using a pre calculated plane.
+        /// </summary>
+        /// <param name="mesh"></param>
+        /// <param name="cutPlane"></param>
+        /// <returns></returns>
         public static CutMesh[] PerformCut(Mesh mesh, Plane cutPlane)
         {
             var meshVertices = mesh.vertices;
             var meshUV = mesh.uv;
             var meshNormals = mesh.normals;
+
             var meshSubMeshCount = mesh.subMeshCount;
+            var subMeshes = new List<int[]>();
 
-            var leftMesh = new CutMesh(meshSubMeshCount);
-            var rightMesh = new CutMesh(meshSubMeshCount);
-
-            // iterate triangles
             for (var subMesh = 0; subMesh < meshSubMeshCount; subMesh++)
             {
-                var meshIndices = mesh.GetIndices(subMesh);
+                subMeshes.Add(mesh.GetIndices(subMesh));
+            }
+
+            return PerformCut(meshVertices, meshNormals, meshUV, subMeshes, cutPlane);
+        }
+
+        /// <summary>
+        /// Perform a cut on a specific mesh, using the under-laying properties.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="normals"></param>
+        /// <param name="uv"></param>
+        /// <param name="subMeshes"></param>
+        /// <param name="cutPlane"></param>
+        /// <returns></returns>
+        public static CutMesh[] PerformCut(Vector3[] vertices, Vector3[] normals, Vector2[] uv,
+                                            List<int[]> subMeshes, Plane cutPlane)
+        {
+            var subMeshesCount = subMeshes.Count;
+
+            var leftMesh = new CutMesh(subMeshesCount);
+            var rightMesh = new CutMesh(subMeshesCount);
+
+            // iterate triangles
+            for (var subMesh = 0; subMesh < subMeshesCount; subMesh++)
+            {
+                var meshIndices = subMeshes[subMesh];
 
                 for (var indicesIndex = 0; indicesIndex < meshIndices.Length - 2; indicesIndex += 3)
                 {
@@ -33,7 +95,7 @@ namespace MeshManipulation.MeshCutting
                     var v2Index = meshIndices[indicesIndex + 1];
                     var v3Index = meshIndices[indicesIndex + 2];
 
-                    var triangle = new MeshTriangle(v1Index, v2Index, v3Index, meshVertices, meshNormals, meshUV);
+                    var triangle = new MeshTriangle(v1Index, v2Index, v3Index, vertices, normals, uv);
 
                     var v1Side = cutPlane.GetSide(triangle.Vertices[0].Point);
                     var v2Side = cutPlane.GetSide(triangle.Vertices[1].Point);
@@ -102,6 +164,7 @@ namespace MeshManipulation.MeshCutting
 
             return new[] { leftMesh, rightMesh };
         }
+
         private static void CreateTrianglesFromTwoVertices(CutMesh mesh, int v1Index, int v2Index, int v3Index, MeshTriangle triangle, Plane plane, int subMesh)
         {
             var v1In = triangle.Vertices[v1Index];
@@ -129,6 +192,8 @@ namespace MeshManipulation.MeshCutting
 
             mesh.AddTriangle(v1In, v1ToV2Point, v1ToV3Point, subMesh);
         }
+
+        #endregion
 
         #region Utility
 
@@ -189,30 +254,6 @@ namespace MeshManipulation.MeshCutting
             Debug.Log($"It took {(t2 - t1).TotalMilliseconds}ms to cut the mesh!");
 
             return mFilters;
-        }
-
-        public static CutMesh[] PerformCut(MeshFilter meshFilter, MeshRenderer cutPlaneRenderer)
-        {
-            if (!cutPlaneRenderer) throw new System.NullReferenceException("cut plane not specified");
-            if (!meshFilter) throw new System.NullReferenceException("Mesh filter is null");
-
-            var mesh = meshFilter.mesh;
-            if (!mesh) throw new System.NullReferenceException("Mesh is null");
-
-            var cutPlaneBounds = cutPlaneRenderer.bounds;
-
-            var rightSize = cutPlaneRenderer.transform.right;
-            rightSize.Scale(cutPlaneBounds.size);
-
-            var p1 = cutPlaneBounds.min;
-            var p2 = cutPlaneBounds.max;
-            var p3 = p1 + rightSize;
-
-            p1 = meshFilter.transform.InverseTransformPoint(p1);
-            p2 = meshFilter.transform.InverseTransformPoint(p2);
-            p3 = meshFilter.transform.InverseTransformPoint(p3);
-
-            return PerformCut(mesh, new Plane(p1, p2, p3));
         }
 
         #endregion
