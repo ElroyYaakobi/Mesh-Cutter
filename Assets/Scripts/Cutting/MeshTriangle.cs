@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace MeshManipulation.MeshCutting
 {
@@ -9,7 +10,7 @@ namespace MeshManipulation.MeshCutting
     {
         internal MeshVertex[] Vertices;
 
-        public MeshTriangle(int v1Index, int v2Index, int v3Index, Vector3[] vertices, Vector3[] normals, Vector2[] uv)
+        public MeshTriangle(int v1Index, int v2Index, int v3Index, List<Vector3> vertices, List<Vector3> normals, List<Vector2> uv)
         {
             Vertices = new[]
             {

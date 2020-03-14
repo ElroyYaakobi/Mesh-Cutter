@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Assertions;
+﻿using System.Collections.Generic;
 
 namespace MeshManipulation.MeshCutting
 {
@@ -60,7 +57,7 @@ namespace MeshManipulation.MeshCutting
         /// <param name="subMesh">target subMesh of the indices</param>
         private void AddNewTriangleVertex(MeshVertex vertex, int subMesh)
         {
-            if(!OldToNewMap.TryGetValue(vertex.OriginalIndex, out var newVIndex))
+            if (!OldToNewMap.TryGetValue(vertex.OriginalIndex, out var newVIndex))
             {
                 newVIndex = AddNewVertex(vertex);
 
@@ -90,7 +87,7 @@ namespace MeshManipulation.MeshCutting
         }
 
         /// <summary>
-        /// Add a completely new trianlge to the mesh
+        /// Add a completely new triangle to the mesh
         /// </summary>
         /// <param name="v1"></param>
         /// <param name="v2"></param>
@@ -98,8 +95,8 @@ namespace MeshManipulation.MeshCutting
         /// <param name="subMesh">target subMesh</param>
         internal void AddTriangle(MeshVertex v1, MeshVertex v2, MeshVertex v3, int subMesh)
         {
-            Assert.IsTrue(subMesh < SubMeshes.Length,
-                $"SubMesh index is out of bounds! total: {SubMeshes.Length} attempt: {subMesh}");
+            if(subMesh >= SubMeshes.Length)
+                throw new System.IndexOutOfRangeException($"SubMesh index is out of bounds! total: {SubMeshes.Length} attempt: {subMesh}");
 
             AddNewTriangleVertex(v1, subMesh);
             AddNewTriangleVertex(v2, subMesh);
@@ -107,5 +104,6 @@ namespace MeshManipulation.MeshCutting
         }
 
         #endregion
+
     }
 }

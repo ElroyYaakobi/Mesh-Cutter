@@ -22,6 +22,9 @@ namespace MeshManipulation
         [Range(1f, 100f)]
         private float maxCutForce = 30f;
 
+        [SerializeField]
+        private bool isKinematicMovement;
+
         private void Update()
         {
             if (!Input.GetMouseButtonDown(0) ||
@@ -36,14 +39,23 @@ namespace MeshManipulation
 
             cutPlane.transform.position = hit.point;
 
-            var cutFilters = MeshCutter.CutMeshFilter(hitFilter, cutPlane, true);
+            var cutFilters = MeshCutter.CutMeshFilter(hitFilter, cutPlane);
 
             float multiplier = -1;
             foreach (var cutFilter in cutFilters)
             {
                 cutFilter.gameObject.AddComponent<BoxCollider>().isTrigger = true;
 
+                if (isKinematicMovement)
+                {
+                    cutFilter.transform.position += Vector3.left * .5f * multiplier;
+                    multiplier *= -1; // now change to positive
+
+                    continue;
+                }
+
                 var rigidBody = cutFilter.gameObject.AddComponent<Rigidbody>();
+
                 rigidBody.velocity = hitFilterRigidbody.velocity;
                 rigidBody.AddForce(Vector3.left * Random.Range(minCutForce, maxCutForce) * multiplier);
 

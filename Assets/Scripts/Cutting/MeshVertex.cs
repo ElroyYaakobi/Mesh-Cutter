@@ -60,10 +60,10 @@ namespace MeshManipulation.MeshCutting
                 throw new System.Exception($"Can't get point between two edge points {v1Point} {v2Point}");
 
             var point = ray.GetPoint(intersectionDistance);
-            var normal = v2.Normal;
 
             // calculate interpolated uv
             var lerpThreshold = intersectionDistance / Vector3.Distance(v1Point, v2Point);
+            var normal = Vector3.Lerp(v1.Normal, v2.Normal, lerpThreshold);
             var uv = Vector2.Lerp(v1.Uv, v2.Uv, lerpThreshold);
 
             return new MeshVertex(-1, point, normal, uv);

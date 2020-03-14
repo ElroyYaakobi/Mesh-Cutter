@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -26,7 +25,7 @@ namespace MeshManipulation.MeshCutting
             if (!meshFilter) throw new System.NullReferenceException("Mesh filter is null");
 
             var mesh = meshFilter.mesh;
-            if (!mesh) throw new System.NullReferenceException("Mesh is null");
+            if (!mesh) throw new NullReferenceException("Mesh is null");
 
             var cutPlaneBounds = cutPlaneRenderer.bounds;
 
@@ -52,17 +51,21 @@ namespace MeshManipulation.MeshCutting
         /// <returns></returns>
         public static CutMesh[] PerformCut(Mesh mesh, Plane cutPlane)
         {
-            var meshVertices = mesh.vertices;
-            var meshUV = mesh.uv;
-            var meshNormals = mesh.normals;
+            var meshVertices = new List<Vector3>();
+            var meshNormals = new List<Vector3>();
+            var meshUV = new List<Vector2>();
 
             var meshSubMeshCount = mesh.subMeshCount;
-            var subMeshes = new List<int[]>();
-
+            var subMeshes = new List<int>[meshSubMeshCount];
             for (var subMesh = 0; subMesh < meshSubMeshCount; subMesh++)
             {
-                subMeshes.Add(mesh.GetIndices(subMesh));
+                subMeshes[subMesh] = new List<int>();
+                mesh.GetTriangles(subMeshes[subMesh], subMesh);
             }
+
+            mesh.GetVertices(meshVertices);
+            mesh.GetNormals(meshNormals);
+            mesh.GetUVs(0, meshUV);
 
             return PerformCut(meshVertices, meshNormals, meshUV, subMeshes, cutPlane);
         }
@@ -76,10 +79,10 @@ namespace MeshManipulation.MeshCutting
         /// <param name="subMeshes"></param>
         /// <param name="cutPlane"></param>
         /// <returns></returns>
-        public static CutMesh[] PerformCut(Vector3[] vertices, Vector3[] normals, Vector2[] uv,
-                                            List<int[]> subMeshes, Plane cutPlane)
+        public static CutMesh[] PerformCut(List<Vector3> vertices, List<Vector3> normals, List<Vector2> uv,
+                                            List<int>[] subMeshes, Plane cutPlane)
         {
-            var subMeshesCount = subMeshes.Count;
+            var subMeshesCount = subMeshes.Length;
 
             var leftMesh = new CutMesh(subMeshesCount);
             var rightMesh = new CutMesh(subMeshesCount);
@@ -89,7 +92,7 @@ namespace MeshManipulation.MeshCutting
             {
                 var meshIndices = subMeshes[subMesh];
 
-                for (var indicesIndex = 0; indicesIndex < meshIndices.Length - 2; indicesIndex += 3)
+                for (var indicesIndex = 0; indicesIndex < meshIndices.Count - 2; indicesIndex += 3)
                 {
                     var v1Index = meshIndices[indicesIndex];
                     var v2Index = meshIndices[indicesIndex + 1];
