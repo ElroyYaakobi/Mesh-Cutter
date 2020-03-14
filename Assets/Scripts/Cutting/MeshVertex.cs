@@ -20,6 +20,16 @@ namespace MeshManipulation.MeshCutting
         }
 
         /// <summary>
+        /// Checks if this vertex is placed exactly on a plane.
+        /// </summary>
+        /// <param name="plane"></param>
+        /// <returns></returns>
+        public bool IsOnPlane(Plane plane)
+        {
+            return Mathf.Abs(plane.GetDistanceToPoint(Point)) <= Mathf.Epsilon;
+        }
+
+        /// <summary>
         /// Calculate an interpolated intersection vertex on a plane using two edge points
         /// </summary>
         /// <param name="v1"></param>
@@ -28,6 +38,18 @@ namespace MeshManipulation.MeshCutting
         /// <returns></returns>
         public static MeshVertex InterpolateVertexOnPlane(MeshVertex v1, MeshVertex v2, Plane plane)
         {
+            // this check is to make sure that we are not accidentally try to raycast from point x to a point that
+            // is exactly on the cutting plane (will result in an error and won't be able to find a hit point)
+            if (v1.IsOnPlane(plane))
+            {
+                return new MeshVertex(-1, v1.Point, v1.Normal, v1.Uv);
+            }
+
+            if (v2.IsOnPlane(plane))
+            {
+                return new MeshVertex(-1, v2.Point, v2.Normal, v2.Uv);
+            }
+
             var v1Point = v1.Point;
             var v2Point = v2.Point;
 
