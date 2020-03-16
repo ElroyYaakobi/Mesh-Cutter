@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-
+using MeshManipulation.Utilities;
 using UnityEngine;
 
 namespace MeshManipulation.MeshCutting
@@ -16,8 +16,9 @@ namespace MeshManipulation.MeshCutting
         public enum DebugOptions
         {
             Vertices = 1,
-            Edges = 2, 
-            Triangles = 4
+            Edges = 2,
+            Triangles = 4,
+            Bounds = 8
         }
 
         #region Variables
@@ -42,6 +43,8 @@ namespace MeshManipulation.MeshCutting
 
             if ((debugOptions & DebugOptions.Vertices) != 0)
                 DrawVerticesGizmos(MFilter);
+            if ((debugOptions & DebugOptions.Bounds) != 0)
+                DrawBoundsGizmos(MFilter);
 
             Gizmos.color = Color.white;
         }
@@ -66,6 +69,23 @@ namespace MeshManipulation.MeshCutting
                 Gizmos.color = Color.white;
                 Gizmos.DrawSphere(vWorldPosition, .1f);
             }
+        }
+
+        private static void DrawBoundsGizmos(MeshFilter mFilter)
+        {
+            if (!mFilter) throw new System.NullReferenceException("Mesh Filter is null");
+
+            var mesh = mFilter.sharedMesh;
+            if (!mesh) throw new System.NullReferenceException("Mesh is null");
+
+            var vertices = new List<Vector3>();
+            mesh.GetVertices(vertices);
+
+            var bounds = MeshUtilities.CalculateWorldBounds(mFilter.transform.localToWorldMatrix, vertices);
+
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireCube(bounds.center, bounds.size);
+            Gizmos.color = Color.white;
         }
 
         #endregion
