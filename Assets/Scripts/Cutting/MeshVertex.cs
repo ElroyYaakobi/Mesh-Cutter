@@ -1,21 +1,23 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace MeshManipulation.MeshCutting
 {
-    public struct MeshVertex
+    public class MeshVertex
     {
         public int OriginalIndex;
         public Vector3 Point;
         public Vector3 Normal;
+        public Vector4 Tangent;
         public Vector2 Uv;
 
-        public MeshVertex(int originalIndex, Vector3 point, Vector3 normal, Vector2 uv)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public MeshVertex(int originalIndex, Vector3 point, Vector3 normal, Vector3 tangent, Vector2 uv)
         {
             OriginalIndex = originalIndex;
             Point = point;
             Normal = normal;
+            Tangent = tangent;
             Uv = uv;
         }
 
@@ -42,12 +44,12 @@ namespace MeshManipulation.MeshCutting
             // is exactly on the cutting plane (will result in an error and won't be able to find a hit point)
             if (v1.IsOnPlane(plane))
             {
-                return new MeshVertex(-1, v1.Point, v1.Normal, v1.Uv);
+                return new MeshVertex(-1, v1.Point, v1.Normal, v1.Tangent, v1.Uv);
             }
 
             if (v2.IsOnPlane(plane))
             {
-                return new MeshVertex(-1, v2.Point, v2.Normal, v2.Uv);
+                return new MeshVertex(-1, v2.Point, v2.Normal, v2.Tangent, v2.Uv);
             }
 
             var v1Point = v1.Point;
@@ -64,9 +66,10 @@ namespace MeshManipulation.MeshCutting
             // calculate interpolated uv
             var lerpThreshold = intersectionDistance / Vector3.Distance(v1Point, v2Point);
             var normal = Vector3.Lerp(v1.Normal, v2.Normal, lerpThreshold);
+            var tangent = Vector4.Lerp(v1.Tangent, v2.Tangent, lerpThreshold);
             var uv = Vector2.Lerp(v1.Uv, v2.Uv, lerpThreshold);
 
-            return new MeshVertex(-1, point, normal, uv);
+            return new MeshVertex(-1, point, normal, tangent, uv);
         }
     }
 

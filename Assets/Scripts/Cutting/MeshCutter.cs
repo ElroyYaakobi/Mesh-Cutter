@@ -21,8 +21,8 @@ namespace MeshManipulation.MeshCutting
         /// <returns></returns>
         public static CutMesh[] PerformCut(MeshFilter meshFilter, MeshRenderer cutPlaneRenderer)
         {
-            if (!cutPlaneRenderer) throw new System.NullReferenceException("cut plane not specified");
-            if (!meshFilter) throw new System.NullReferenceException("Mesh filter is null");
+            if (!cutPlaneRenderer) throw new NullReferenceException("cut plane not specified");
+            if (!meshFilter) throw new NullReferenceException("Mesh filter is null");
 
             var mesh = meshFilter.mesh;
             if (!mesh) throw new NullReferenceException("Mesh is null");
@@ -53,7 +53,8 @@ namespace MeshManipulation.MeshCutting
         {
             var meshVertices = new List<Vector3>();
             var meshNormals = new List<Vector3>();
-            var meshUV = new List<Vector2>();
+            var meshTangents = new List<Vector4>();
+            var meshUv = new List<Vector2>();
 
             var meshSubMeshCount = mesh.subMeshCount;
             var subMeshes = new List<int>[meshSubMeshCount];
@@ -65,9 +66,10 @@ namespace MeshManipulation.MeshCutting
 
             mesh.GetVertices(meshVertices);
             mesh.GetNormals(meshNormals);
-            mesh.GetUVs(0, meshUV);
+            mesh.GetTangents(meshTangents);
+            mesh.GetUVs(0, meshUv);
 
-            return PerformCut(meshVertices, meshNormals, meshUV, subMeshes, cutPlane);
+            return PerformCut(meshVertices, meshNormals, meshTangents, meshUv, subMeshes, cutPlane);
         }
 
         /// <summary>
@@ -75,11 +77,12 @@ namespace MeshManipulation.MeshCutting
         /// </summary>
         /// <param name="vertices"></param>
         /// <param name="normals"></param>
+        /// <param name="tangents"></param>
         /// <param name="uv"></param>
         /// <param name="subMeshes"></param>
         /// <param name="cutPlane"></param>
         /// <returns></returns>
-        public static CutMesh[] PerformCut(List<Vector3> vertices, List<Vector3> normals, List<Vector2> uv,
+        public static CutMesh[] PerformCut(List<Vector3> vertices, List<Vector3> normals, List<Vector4> tangents, List<Vector2> uv,
                                             List<int>[] subMeshes, Plane cutPlane)
         {
             var subMeshesCount = subMeshes.Length;
@@ -98,7 +101,7 @@ namespace MeshManipulation.MeshCutting
                     var v2Index = meshIndices[indicesIndex + 1];
                     var v3Index = meshIndices[indicesIndex + 2];
 
-                    var triangle = new MeshTriangle(v1Index, v2Index, v3Index, vertices, normals, uv);
+                    var triangle = new MeshTriangle(v1Index, v2Index, v3Index, vertices, normals, tangents, uv);
 
                     var v1Side = cutPlane.GetSide(triangle.Vertices[0].Point);
                     var v2Side = cutPlane.GetSide(triangle.Vertices[1].Point);
@@ -214,7 +217,7 @@ namespace MeshManipulation.MeshCutting
             var cutMeshes = PerformCut(meshFilter, cutPlaneRenderer);
 
             var meshRenderer = meshFilter.GetComponent<MeshRenderer>();
-            var materials = meshRenderer?.sharedMaterials ?? null;
+            var materials = meshRenderer.sharedMaterials;
 
             var mFilters = new MeshFilter[cutMeshes.Length];
             for (var i = 0; i < cutMeshes.Length; i++)
