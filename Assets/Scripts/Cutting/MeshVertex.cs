@@ -12,9 +12,25 @@ namespace MeshManipulation.MeshCutting
         public Vector2 Uv;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public MeshVertex(int originalIndex, Vector3 point, Vector3 normal, Vector3 tangent, Vector2 uv)
+        public MeshVertex(int originalIndex, Vector3 point, Vector3 normal, Vector4 tangent, Vector2 uv)
+        {
+            Set(originalIndex, point, normal, tangent, uv);
+        }
+
+        /// <summary>
+        /// Set data after initialization
+        /// </summary>
+        /// <param name="originalIndex"></param>
+        /// <param name="point"></param>
+        /// <param name="normal"></param>
+        /// <param name="tangent"></param>
+        /// <param name="uv"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Set(int originalIndex, Vector3 point,
+            Vector3 normal, Vector4 tangent, Vector2 uv)
         {
             OriginalIndex = originalIndex;
+
             Point = point;
             Normal = normal;
             Tangent = tangent;
